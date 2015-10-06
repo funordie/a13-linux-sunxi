@@ -1,0 +1,73 @@
+Kernel sources for A13 are available on GitHub. Note that the following building is made with the revision below: 
+
+# git rev-parse --verify HEAD
+e37d760b363888f3a65cd6455c99a75cac70a7b8
+
+You can download the kernel sources using the following command:
+
+# git clone https://github.com/linux-sunxi/linux-sunxi
+
+After the download go to the kernel directory
+
+# cd linux-sunxi/
+
+The next step is to configure the system 
+
+Here you need from a13 configuration file – a13_linux_defconfig. The file contains all kernel module settings.
+
+Download a13_linux_defconfig using wget command 
+
+# wget https://github.com/OLIMEX/OLINUXINO/raw/master/SOFTWARE/A13/A13-build/a13_linux_defconfig
+
+then copy a13_linux_defconfig file to configs directory:
+
+# cp a13_linux_defconfig /arch/arm/configs/.
+
+and make:
+
+# make ARCH=arm a13_linux_defconfig
+
+The result should be:
+
+configuration written to .config
+
+If you wish to make your changes in the kernel configuration do:
+
+# make ARCH=arm menuconfig
+
+The menuconfig changes a .config text file, which you can view/edit even with a text editor like vi,nano.
+With this command you can add or remove different modules for the different peripherials in the kernel. Be careful when use this as this may cause the kernel to not work properly.
+
+Now you can continue with kernel image compiling 
+
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 uImage
+
+when this finish you will have uImage ready and the result should be:
+
+OBJCOPY arch/arm/boot/zImage
+Kernel: arch/arm/boot/zImage is ready
+UIMAGE  arch/arm/boot/uImage
+Image Name:   Linux-3.4.90+
+Created:      Thu Jul  3 16:00:03 2014
+Image Type:   ARM Linux Kernel Image (uncompressed)
+Data Size:    4340720 Bytes = 4238.98 kB = 4.14 MB
+Load Address: 40008000
+Entry Point:  40008000
+Image arch/arm/boot/uImage is ready
+
+Now you can build the kernel modules:
+
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules
+# make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j4 INSTALL_MOD_PATH=out modules_install
+DONE! At this point you have uboot and kernel modules.
+
+The uImage file is located in linux-sunxi/arch/arm/boot/
+
+The kernel modules are located in
+
+linux-sunxi/out/lib/modules/3.x.xx
+where 3.x.xx is kernel version
+
+in our case the directory with modules is:
+
+linux-sunxi/out/lib/modules/3.4.90+
