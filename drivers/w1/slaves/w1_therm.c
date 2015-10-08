@@ -29,6 +29,8 @@
 #include <linux/types.h>
 #include <linux/delay.h>
 
+#include <linux/ctype.h>
+
 #include "../w1.h"
 #include "../w1_int.h"
 #include "../w1_family.h"
@@ -53,8 +55,11 @@ static u8 bad_roms[][9] = {
 static ssize_t w1_therm_read(struct device *device,
 	struct device_attribute *attr, char *buf);
 
+static ssize_t w1_therm_store(struct device *device, struct device_attribute *attr,
+        const char *buf, size_t count);
+
 static struct device_attribute w1_therm_attr =
-	__ATTR(w1_slave, S_IRUGO, w1_therm_read, NULL);
+	__ATTR(w1_slave, S_IRUSR|S_IWUSR| S_IRGRP|S_IWGRP | S_IROTH|S_IWOTH, w1_therm_read, w1_therm_store);
 
 static int w1_therm_add_slave(struct w1_slave *sl)
 {
@@ -169,6 +174,50 @@ static int w1_therm_check_rom(u8 rom[9])
 
 	return 0;
 }
+static ssize_t w1_therm_store(struct device *device, struct device_attribute *attr,
+        const char *buf, size_t count)
+{
+    unsigned long res = 0;
+    unsigned char value = 0;
+
+    struct w1_slave *sl = dev_to_w1_slave(device);
+    struct w1_master *dev = sl->master;
+
+    dev_info(device, "w1_therm_write family:0x%02x id:0x%08x crc:0x%02x",(unsigned int)sl->reg_num.family, (unsigned int)sl->reg_num.id, (unsigned int)sl->reg_num.crc);
+    dev_info(device, "w1_therm_write buf:%s count:%d\n", buf, count);
+
+    if(count > 3 || count < 2) {
+        dev_err(device, "w1_therm_write invalid input value!!!\n");
+        return -EINVAL;
+    }
+
+    res = simple_strtoul(buf, NULL, 10);
+    if(res == ULONG_MAX) {
+        dev_err(device, "w1_therm_write invalid input value!!!\n");
+        return -EINVAL;
+    }
+
+    switch(res) {
+    case 12: value = 0x03; break;
+    case 11: value = 0x02; break;
+    case 10: value = 0x01; break;
+    case 9:  value = 0x00; break;
+    default:
+        dev_err(device, "w1_therm_write invalid input resolution!!! use default 12 bits\n");
+        value = 0x03;
+        break;
+    }
+
+    if (!w1_reset_select_slave(sl)) {
+        w1_write_8(dev, W1_WRITE_SCRATCHPAD);
+        w1_write_8(dev, 0x00);
+        w1_write_8(dev, 0x00);
+        w1_write_8(dev, (value & 0x03) << 5);
+        w1_write_8(dev, W1_COPY_SCRATCHPAD);
+    }
+
+    return count;
+}
 
 static ssize_t w1_therm_read(struct device *device,
 	struct device_attribute *attr, char *buf)
@@ -179,6 +228,7 @@ static ssize_t w1_therm_read(struct device *device,
 	int i, max_trying = 10;
 	ssize_t c = PAGE_SIZE;
 
+	dev_info(device, "w1_therm_read family:0x%02x id:0x%08x crc:0x%02x",(unsigned int)sl->reg_num.family, (unsigned int)sl->reg_num.id, (unsigned int)sl->reg_num.crc);
 	i = mutex_lock_interruptible(&dev->mutex);
 	if (i != 0)
 		return i;
