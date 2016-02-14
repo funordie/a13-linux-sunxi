@@ -188,6 +188,7 @@ static struct usb_device_id rtw_usb_id_tbl[] ={
 	{USB_DEVICE(USB_VENDER_ID_REALTEK, 0x8179)},//Default ID	
 	{USB_DEVICE(USB_VENDER_ID_REALTEK, 0x0179)},//RTL8188ETV
 #endif
+	{USB_DEVICE(0x2001, 0x3311)}, /* DLink GO-USB-N150 REV B1 */
 	{}	/* Terminating entry */
 };
 
