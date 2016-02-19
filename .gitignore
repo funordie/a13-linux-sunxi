@@ -86,7 +86,7 @@ GTAGS
 \#*#
 
 # build generated files
-output/
+out/
 arch/arm/*/pm/standby/standby.code
 arch/arm/*/pm/standby/standby.map
 modules/example/*.symvers
